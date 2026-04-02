@@ -1,4 +1,5 @@
-import {} from "./compiler.js";
+import { PARTICLES } from "./particles.js";
+import { compile } from "./compiler.js";
 
 
 const canvas = document.getElementById("canvas");
@@ -29,28 +30,39 @@ function get_index(x, y) {
   return x + y * cols;
 }
 
-const grid = [];
-for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-        //grid[i + (j*400)] = Math.round(Math.random());
-        grid[x + (y*cols)] = (y < (rows/2)) && Math.round(Math.random());
-    }
-}
-
 for (let i = 0; i < rows*cols; i++) {
     setPixel(i, 205, 170, 109, 255);
 }
 
+const grid = [];
+for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+        //grid[i + (j*400)] = Math.round(Math.random());
+        grid[x + (y*cols)] = (y < (rows/2));
+    }
+}
+
+
+const values = compile(PARTICLES, cols, rows);
+const rules = values.rules;
+const colours = values.colours;
+
+
+// TODO
+// Create a buffer grid 
+// Move values into it
+
+
 function loop() {
-    // Sand dripping from top
     grid[get_index(cols/2,0)] = 1;
     grid[get_index(cols/2+1,0)] = 1;
 
-
     for (let y = rows-2; y >= 0; y--) {
         for (let x = 0; x < cols; x++) {
-            
             const i = get_index(x, y);
+
+
+
             if (grid[i]== 1) {
                 const dir = (2*(x%2))-1; 
                 const below = get_index(x, y+1)
