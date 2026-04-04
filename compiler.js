@@ -197,17 +197,77 @@ export function compile(particles, width, height) {
                     if (flag == true) offsetsArray.push(offset);
                 }
 
-                console.log("pattern");
-                console.log(offsetsArray);
-
-                // offsets = includeArray - excludeArray
-
+                // Compile patern and filter into compiledCondition string
                 const filter = condition.filter;
-                const any = filter.any;
-                const all = filter.all;
-                const none = filter.none;
-                console.log("filter");
-                console.log(filter);
+
+                /*
+                if (all conditions for offset) 
+                then (result for offset)
+
+                repeat for ever offset
+                */
+                for (const i in offsetsArray) {
+                    let compiledCondition = "";
+                    const offset = offsetsArray[i];
+
+                    const any = filter.any;
+                    if (any != undefined) {
+                        compiledCondition += "(";
+
+                        for (const i in any) {
+                            const id = any[i];
+                            if (i != 0) {
+                                compiledCondition += "||";
+                            }
+
+                            compiledCondition += "(grid[index+("+String(offset)+")]=="+id+")";
+                                
+                        }
+                        compiledCondition += ")"
+                    }
+
+                    const all = filter.all;
+                    if (all != undefined) {
+                        if (any != undefined) {
+                            compiledCondition += "&&";
+                        }
+
+                        compiledCondition += "(";
+
+                        for (const i in all) {
+                            const id = all[i];       
+                            if (i != 0) {
+                                compiledCondition += "&&";
+                            }                        
+                            compiledCondition += "(grid[index+("+String(offset)+")]=="+id+")";
+                        }
+                        compiledCondition += ")"
+                    }
+
+                    const none = filter.none;
+                    if (none != undefined) {
+                        if (all != undefined || any != undefined) {
+                            compiledCondition += "&&";
+                        }
+                        
+                        compiledCondition += "(";
+
+                        for (const i in none) {
+                            const id = none[i];
+                            if (i != 0) {
+                                compiledCondition += "&&";
+                            } 
+                            compiledCondition += "(grid[index+("+String(offset)+")]!="+id+")";  
+                        }
+                    
+                        compiledCondition += ")"
+                    }
+
+                console.log("condition");
+                console.log(compiledCondition);
+
+                }
+
             }
 
             console.log("result");
