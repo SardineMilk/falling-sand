@@ -37,8 +37,8 @@ for (let i = 0; i < rows*cols; i++) {
 const grid = [];
 for (let y = 0; y < rows; y++) {
     for (let x = 0; x < cols; x++) {
-        //grid[i + (j*400)] = Math.round(Math.random());
-        grid[x + (y*cols)] = (y < (rows/2));
+        //grid[x + (y*400)] = Math.round(Math.random());
+        grid[x + (y*cols)] = (Math.random() > 1.5);
     }
 }
 
@@ -54,8 +54,7 @@ const colours = values.colours;
 
 
 function loop() {
-    grid[get_index(cols/2,0)] = 1;
-    grid[get_index(cols/2+1,0)] = 1;
+    grid[get_index(Math.round(Math.random()*cols),0)] = 1;
 
     for (let y = rows-2; y >= 0; y--) {
         for (let x = 0; x < cols; x++) {
@@ -64,18 +63,17 @@ function loop() {
 
 
             if (grid[i]== 1) {
-                const dir = (2*(x%2))-1; 
+                const dir = (2*(Math.round(Math.random())))-1; 
                 const below = get_index(x, y+1)
+
                 if (grid[below] == 0) {
                     grid[i] = 0;
                     grid[below] = 1;
                 }
-                
                 else if (grid[below+dir] == 0) {
                     grid[i] = 0;
                     grid[below+dir] = 1;
                 }
-                
                 else if (grid[below-dir] == 0) {
                     grid[i] = 0;
                     grid[below-dir] = 1;

@@ -121,6 +121,97 @@ function extractRulesArray(particles) {
 }
 
 
+function constructCondition(filter, offset) {
+    let compiledCondition = "";
+
+    const any = filter.any;
+    if (any != undefined) {
+        compiledCondition += "(";
+
+        for (const i in any) {
+            const id = any[i];
+            if (i != 0) {
+                compiledCondition += "||";
+            }
+
+            compiledCondition += "(grid[index+("+String(offset)+")]=="+id+")";
+                
+        }
+        compiledCondition += ")"
+    }
+
+    const all = filter.all;
+    if (all != undefined) {
+        if (any != undefined) {
+            compiledCondition += "&&";
+        }
+
+        compiledCondition += "(";
+
+        for (const i in all) {
+            const id = all[i];       
+            if (i != 0) {
+                compiledCondition += "&&";
+            }                        
+            compiledCondition += "(grid[index+("+String(offset)+")]=="+id+")";
+        }
+        compiledCondition += ")"
+    }
+
+    const none = filter.none;
+    if (none != undefined) {
+        if (all != undefined || any != undefined) {
+            compiledCondition += "&&";
+        }
+        
+        compiledCondition += "(";
+
+        for (const i in none) {
+            const id = none[i];
+            if (i != 0) {
+                compiledCondition += "&&";
+            } 
+            compiledCondition += "(grid[index+("+String(offset)+")]!="+id+")";  
+        }
+    
+        compiledCondition += ")"
+    }
+
+    return compiledCondition;
+}
+
+
+function expandPattern(grid, cells) {
+    let expandedArray = [];
+
+    // Grid expansion            
+    if (grid != undefined) {        
+        const xValues = grid.dx;
+        const yValues = grid.dy;
+        for (const i in xValues) {
+            for (const j in yValues) {
+                const dx = xValues[i];
+                const dy = yValues[j];
+
+                const offset = dx + (dy * width);
+
+                expandedArray.push(offset);
+            }
+        }
+    }
+    
+    if (cells != undefined) {
+        // Cells expansion
+        for (const i in cells) {
+            const cell = cells[i];
+            const offset = cell.dx + (cell.dy * width);
+            expandedArray.push(offset);
+        }
+    }
+    return expandedArray;
+}
+
+
 export function compile(particles, width, height) {
     let compiledParticles = particles;
 
@@ -152,37 +243,6 @@ export function compile(particles, width, height) {
                 const exclude = pattern.exclude;
 
 
-                function expandPattern(grid, cells) {
-                    let expandedArray = [];
-
-                    // Grid expansion            
-                    if (grid != undefined) {        
-                        const xValues = grid.dx;
-                        const yValues = grid.dy;
-                        for (const i in xValues) {
-                            for (const j in yValues) {
-                                const dx = xValues[i];
-                                const dy = yValues[j];
-
-                                const offset = dx + (dy * width);
-
-                                expandedArray.push(offset);
-                            }
-                        }
-                    }
-                    
-                    if (cells != undefined) {
-                        // Cells expansion
-                        for (const i in cells) {
-                            const cell = cells[i];
-                            const offset = cell.dx + (cell.dy * width);
-                            expandedArray.push(offset);
-                        }
-                    }
-                    return expandedArray;
-                }
-
-
                 const includeArray = expandPattern(include.grid, include.cells);
                 const excludeArray = expandPattern(exclude.grid, exclude.cells);
 
@@ -207,64 +267,12 @@ export function compile(particles, width, height) {
                 repeat for ever offset
                 */
                 for (const i in offsetsArray) {
-                    let compiledCondition = "";
                     const offset = offsetsArray[i];
 
-                    const any = filter.any;
-                    if (any != undefined) {
-                        compiledCondition += "(";
+                    let compiledCondition = constructCondition(filter, offset)
 
-                        for (const i in any) {
-                            const id = any[i];
-                            if (i != 0) {
-                                compiledCondition += "||";
-                            }
-
-                            compiledCondition += "(grid[index+("+String(offset)+")]=="+id+")";
-                                
-                        }
-                        compiledCondition += ")"
-                    }
-
-                    const all = filter.all;
-                    if (all != undefined) {
-                        if (any != undefined) {
-                            compiledCondition += "&&";
-                        }
-
-                        compiledCondition += "(";
-
-                        for (const i in all) {
-                            const id = all[i];       
-                            if (i != 0) {
-                                compiledCondition += "&&";
-                            }                        
-                            compiledCondition += "(grid[index+("+String(offset)+")]=="+id+")";
-                        }
-                        compiledCondition += ")"
-                    }
-
-                    const none = filter.none;
-                    if (none != undefined) {
-                        if (all != undefined || any != undefined) {
-                            compiledCondition += "&&";
-                        }
-                        
-                        compiledCondition += "(";
-
-                        for (const i in none) {
-                            const id = none[i];
-                            if (i != 0) {
-                                compiledCondition += "&&";
-                            } 
-                            compiledCondition += "(grid[index+("+String(offset)+")]!="+id+")";  
-                        }
-                    
-                        compiledCondition += ")"
-                    }
-
-                console.log("condition");
-                console.log(compiledCondition);
+                    console.log("condition");
+                    console.log(compiledCondition);
 
                 }
 
@@ -279,8 +287,6 @@ export function compile(particles, width, height) {
 
         }
     }
-
-
 
    return {particleRules, colours};
 }
