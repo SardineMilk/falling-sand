@@ -50,7 +50,7 @@ SAND: {
         ],
         result: {
             select: "random",
-            move: {
+            swap: {
             dx: "$dx",
             dy: "$dy",
             }
@@ -94,7 +94,7 @@ WATER: {
         ],
         result: {
             select: "random",
-            move: {
+            swap: {
             dx: "$dx",
             dy: "$dy",
             }

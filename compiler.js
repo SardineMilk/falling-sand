@@ -134,7 +134,7 @@ function constructCondition(filter, offset) {
                 compiledCondition += "||";
             }
 
-            compiledCondition += "(grid[index+("+String(offset)+")]=="+id+")";
+            compiledCondition += "(state[index+("+String(offset)+")]=="+id+")";
                 
         }
         compiledCondition += ")"
@@ -153,7 +153,7 @@ function constructCondition(filter, offset) {
             if (i != 0) {
                 compiledCondition += "&&";
             }                        
-            compiledCondition += "(grid[index+("+String(offset)+")]=="+id+")";
+            compiledCondition += "(state[index+("+String(offset)+")]=="+id+")";
         }
         compiledCondition += ")"
     }
@@ -171,7 +171,7 @@ function constructCondition(filter, offset) {
             if (i != 0) {
                 compiledCondition += "&&";
             } 
-            compiledCondition += "(grid[index+("+String(offset)+")]!="+id+")";  
+            compiledCondition += "(state[index+("+String(offset)+")]!="+id+")";  
         }
     
         compiledCondition += ")"
@@ -183,6 +183,7 @@ function constructCondition(filter, offset) {
 
 function expandPattern(grid, cells) {
     let expandedArray = [];
+    let width = 400;
 
     // Grid expansion            
     if (grid != undefined) {        
@@ -224,7 +225,22 @@ export function compile(particles, width, height) {
     // Cleanup - Remove unecessary data
     let particleRules = extractRulesArray(compiledParticles);
 
+
+    let code = 
+`
+export function querySimulation(state, index) {
+switch (state[index]) {
+`;
+
+/*
+}
+}
+*/
+
     for (const i in particleRules) {
+        
+        code += `case `+i+`:\n`;
+
         const rules = particleRules[i];  // Rules array for a single particle
         console.log(i);
         for (const j in rules) {
@@ -233,10 +249,14 @@ export function compile(particles, width, height) {
             const conditions = rule.conditions;
             const result = rule.result;
 
+            console.log("result");
+            console.log(result);
+            const swap = result.swap;
+            const transform = result.transform;
+            const set = result.set;
+
             for (const k in conditions) {
                 const condition = conditions[k];
-                let conditionsString = "";
-
 
                 const pattern = condition.pattern;
                 const include = pattern.include;
@@ -249,12 +269,12 @@ export function compile(particles, width, height) {
                 // Remove anything in excludeArray from includeArray
                 const offsetsArray = []
                 for (const i in includeArray) {
-                    const offset = includeArray[i];
+                    const includeOffset = includeArray[i];
                     let flag = true;
                     for (const j in excludeArray) {
-                        if (offset == excludeArray[j]) flag = false; 
+                        if (includeOffset == excludeArray[j]) flag = false; 
                     }
-                    if (flag == true) offsetsArray.push(offset);
+                    if (flag == true) offsetsArray.push(includeOffset);
                 }
 
                 // Compile patern and filter into compiledCondition string
@@ -269,24 +289,35 @@ export function compile(particles, width, height) {
                 for (const i in offsetsArray) {
                     const offset = offsetsArray[i];
 
-                    let compiledCondition = constructCondition(filter, offset)
+                    let compiledCondition = constructCondition(filter, offset);
 
+                    // TODO factor out to above with result and use result variables
+                    let resultStatement = "let temp = grid[index+("+offset+")]; grid[index+("+offset+")] = grid[index]; grid[index] = temp;";  
+                    let conditionIfStatement = "if ("+compiledCondition+") {"+resultStatement+" break;}\n";
+
+                    code += conditionIfStatement;
+                    /*
                     console.log("condition");
-                    console.log(compiledCondition);
-
+                    console.log(conditionIfStatement);
+                    */
                 }
 
             }
 
-            console.log("result");
-            console.log(result);
-            const move = result.move;
-            const transform = result.transform;
-            const set = result.set;
-
-
         }
+
+        code += `break;\n\n`;
+
     }
+
+    code += `
+default:
+break;
+}
+}    
+    `;
+
+    console.log(code);
 
    return {particleRules, colours};
 }
